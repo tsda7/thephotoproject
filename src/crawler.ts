@@ -95,18 +95,43 @@ function displayFileSystem(
 
         function displayImage(item: string) {
             let container = document.createElement("div");
-            container.classList.add("flex", "flex-col", "items-center");
+            container.classList.add(
+                "flex",
+                "flex-col",
+                "items-center",
+                "justify-center"
+            );
             let img = container.appendChild(document.createElement("img"));
-            img.classList.add("w-1/2", "h-1/2", "object-contain");
+            img.classList.add(
+                "w-1/2",
+                "h-1/2",
+                "object-contain",
+                "cursor-pointer"
+            );
+            img.dataset.fancybox = "gallery";
             img.src = `https://github.com/${repo}/raw/main/${
                 currentPath + item
             }`;
-            target.appendChild(img);
+            target.appendChild(container);
         }
 
         function displayNavigation(dirName: string) {
+            let navPlaceholder = document.createElement("div");
+            navPlaceholder.classList.add("h-6");
+            target.appendChild(navPlaceholder);
+
             let nav = target.appendChild(document.createElement("nav"));
-            nav.classList.add("flex", "flex-row", "gap-2", "items-center");
+            nav.classList.add(
+                "flex",
+                "flex-row",
+                "gap-2",
+                "items-center",
+                "fixed",
+                "top-0",
+                "left-0",
+                "p-4",
+                "z-10"
+            );
 
             let iconBack = nav.appendChild(document.createElement("span"));
             iconBack.classList.add(
