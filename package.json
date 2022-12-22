@@ -1,22 +1,23 @@
 {
-  "name": "more_secret",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "yarn tsc"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tsda7/more_secret.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/tsda7/more_secret/issues"
-  },
-  "homepage": "https://github.com/tsda7/more_secret#readme",
-  "devDependencies": {
-    "typescript": "^4.9.4"
-  }
+    "name": "more_secret",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "yarn tsc",
+        "watch": "yarn tsc -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tsda7/more_secret.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/tsda7/more_secret/issues"
+    },
+    "homepage": "https://github.com/tsda7/more_secret#readme",
+    "devDependencies": {
+        "typescript": "^4.9.4"
+    }
 }
