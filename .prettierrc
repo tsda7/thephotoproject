@@ -1,0 +1,6 @@
+{
+    "tabWidth": 4,
+    "tailingComma": "all",
+    "useTabs": false,
+    "singleQuote": false
+}

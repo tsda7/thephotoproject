@@ -1,1 +1,3 @@
-console.log("hello world");
+import crawler from "./crawler.js";
+
+crawler();
