@@ -1,63 +1,144 @@
-import { baseUrl, target } from "./config.js";
+import { baseUrl, repo, target } from "./config.js";
 import checkFileExtension from "./fileChecker.js";
+import { apiResponse } from "./apiTypes.js";
 
-type apiResponse =
-    | {
-          sha: string;
-          url: string;
-          tree: (blobItem | treeItem)[];
-          truncated: boolean;
-      }
-    | {
-          message: string;
-          documentation_url: string;
-      };
-type item = {
-    path: string;
-    mode: string;
-    sha: string;
-    url: string;
-};
-type blobItem = item & {
-    type: "blob";
-    size: number;
-};
-type treeItem = item & {
-    type: "tree";
+type parsedFileSystem = {
+    [key: string]: parsedFileSystem | string;
 };
 
-function displayImage(item: blobItem) {
-    let img = document.createElement("img");
-    img.src = item.url;
-    target.appendChild(img);
-}
-
-function displayFolder(item: treeItem) {
-    let folder = document.createElement("div");
-    folder.className = "folder";
-    folder.innerText = item.path;
-    folder.addEventListener("click", () => crawler(item.url));
-    target.appendChild(folder);
-}
-function clearData() {
+export function clearData() {
     target.innerHTML = "";
 }
-function displayData(data: apiResponse) {
+
+export default async function crawler() {
+    const data = (await (await fetch(baseUrl)).json()) as apiResponse;
+
     if ("message" in data) {
-        console.log(data.message);
+        console.error(data.message);
         return;
     }
+
+    const parsedFileSystem: parsedFileSystem = {};
     data.tree.forEach((item) => {
         if (item.type === "blob" && checkFileExtension(item.path)) {
-            displayImage(item);
-        } else if (item.type === "tree") {
-            displayFolder(item);
+            let path = item.path.split("/");
+            let filename = path.pop();
+            let currentDir = parsedFileSystem;
+            path.forEach((dir: string) => {
+                if (!currentDir[dir]) currentDir[dir] = {};
+                currentDir = currentDir[dir] as parsedFileSystem;
+            });
+            currentDir[filename as string] = item.url;
         }
+    });
+
+    displayFileSystem(parsedFileSystem);
+}
+
+/**
+ * resolves as soon as the directory is closed
+ */
+function displayFileSystem(
+    currentDir: parsedFileSystem,
+    currentPath = "",
+    dirName?: string
+): Promise<void> {
+    return new Promise((resolve, _reject) => {
+        /**
+         *
+         * @param dir the directory to open
+         * @returns true if the directory was opened and later closed again, false if the directory was not a directory
+         */
+        async function openDir(dir: string) {
+            const newDir = currentDir[dir];
+            if (newDir !== undefined && typeof newDir !== "string") {
+                await displayFileSystem(newDir, currentPath + dir + "/", dir);
+                return true;
+            } else return false;
+        }
+
+        function displayFolder(name: string) {
+            let folder = document.createElement("div");
+            folder.classList.add(
+                "flex",
+                "flex-row",
+                "items-center",
+                "cursor-pointer",
+                "bg-gray-200",
+                "p-2",
+                "rounded-md",
+                "flex",
+                "gap-2"
+            );
+
+            let folderIcon = folder.appendChild(document.createElement("span"));
+            folderIcon.className = "material-symbols-outlined";
+            folderIcon.innerText = "folder";
+
+            let folderName = folder.appendChild(document.createElement("span"));
+            folderName.innerText = name;
+
+            folder.addEventListener("click", () =>
+                openDir(name).then(async (wasOpened) => {
+                    if (wasOpened)
+                        resolve(
+                            await displayFileSystem(
+                                currentDir,
+                                currentPath,
+                                dirName
+                            )
+                        );
+                })
+            );
+            target.appendChild(folder);
+        }
+
+        function displayImage(item: string) {
+            let container = document.createElement("div");
+            container.classList.add("flex", "flex-col", "items-center");
+            let img = container.appendChild(document.createElement("img"));
+            img.classList.add("w-1/2", "h-1/2", "object-contain");
+            img.src = `https://github.com/${repo}/raw/main/${
+                currentPath + item
+            }`;
+            target.appendChild(img);
+        }
+
+        function displayNavigation(dirName: string) {
+            let nav = target.appendChild(document.createElement("nav"));
+            nav.classList.add("flex", "flex-row", "gap-2", "items-center");
+
+            let iconBack = nav.appendChild(document.createElement("span"));
+            iconBack.classList.add(
+                "material-symbols-outlined",
+                "cursor-pointer"
+            );
+            iconBack.innerText = "arrow_back";
+            iconBack.addEventListener("click", () => {
+                resolve();
+            });
+
+            let path = nav.appendChild(document.createElement("span"));
+            path.className = "path";
+            path.innerText = dirName;
+        }
+
+        target.innerHTML = "";
+
+        if (dirName) displayNavigation(dirName);
+
+        Object.keys(currentDir)
+            .filter((dir) => {
+                return typeof currentDir[dir] === "object";
+            })
+            .map(displayFolder);
+
+        Object.keys(currentDir)
+            .filter((dir) => {
+                return typeof currentDir[dir] === "string";
+            })
+            .map(displayImage);
     });
 }
 
-export default async function crawler(url: string = baseUrl) {
-    const data = (await (await fetch(url)).json()) as apiResponse;
-    clearData();
-    displayData(data);
-}
+target.classList.add("flex", "flex-col", "gap-4", "p-4");
